@@ -1,7 +1,8 @@
-import { Ionicons } from '@expo/vector-icons'; // 👈 アイコン用
+import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
+import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 
 export default function MapWithAvatar() {
@@ -9,11 +10,13 @@ export default function MapWithAvatar() {
     latitude: 35.0266,
     longitude: 135.7809,
   });
-
+  const [heading, setHeading] = useState(0);
   const mapRef = useRef(null);
+  const router = useRouter();
 
   useEffect(() => {
     let locationSubscription;
+    let headingSubscription;
 
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -33,27 +36,32 @@ export default function MapWithAvatar() {
           setPosition({ latitude, longitude });
         }
       );
+
+      headingSubscription = await Location.watchHeadingAsync((headingData) => {
+        setHeading(headingData.trueHeading ?? headingData.magHeading);
+      });
     })();
 
     return () => {
       locationSubscription?.remove();
+      headingSubscription?.remove();
     };
   }, []);
 
-  const handleLostPress = () => {
-    console.log('失くした！ボタンが押されました');
-  };
+  const handleLostPress = () => router.push('/lost');
+  const handleFoundPress = () => router.push('/found');
+  const handleTalkPress = () => router.push('/chat');
+  const handleSettingsPress = () => router.push('/settings');
 
-  const handleFoundPress = () => {
-    console.log('見つけた！ボタンが押されました');
-  };
-
-  const handleTalkPress = () => {
-    console.log('話す！ボタンが押されました');
-  };
-
-  const handleSettingsPress = () => {
-    console.log('⚙️ 設定ボタンが押されました');
+  const recenterMap = () => {
+    mapRef.current?.animateToRegion(
+      {
+        ...position,
+        latitudeDelta: 0.005,
+        longitudeDelta: 0.005,
+      },
+      500
+    );
   };
 
   return (
@@ -61,6 +69,8 @@ export default function MapWithAvatar() {
       <MapView
         ref={mapRef}
         style={styles.map}
+        showsCompass={false}
+        showsMyLocationButton={false}
         initialRegion={{
           ...position,
           latitudeDelta: 0.005,
@@ -70,12 +80,20 @@ export default function MapWithAvatar() {
         <Marker coordinate={position} title="あなた" />
       </MapView>
 
-      {/* ⚙️ 設定ボタン */}
       <TouchableOpacity style={styles.settingsButton} onPress={handleSettingsPress}>
         <Ionicons name="settings-outline" size={28} color="#333" />
       </TouchableOpacity>
 
-      {/* アクションボタン群 */}
+      <TouchableOpacity style={styles.compassButton} onPress={recenterMap}>
+        <Animated.View
+          style={{
+            transform: [{ rotate: `${heading}deg` }],
+          }}
+        >
+          <Ionicons name="compass-outline" size={26} color="#fff" />
+        </Animated.View>
+      </TouchableOpacity>
+
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={styles.button} onPress={handleLostPress}>
           <Text style={styles.buttonText}>失くした！</Text>
@@ -94,10 +112,11 @@ export default function MapWithAvatar() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   map: { flex: 1 },
+
   settingsButton: {
     position: 'absolute',
     top: 40,
-    right: 20,
+    left: 20,
     backgroundColor: 'white',
     borderRadius: 25,
     padding: 10,
@@ -107,6 +126,16 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 3,
   },
+
+  compassButton: {
+    position: 'absolute',
+    top: 40,
+    right: 20,
+    backgroundColor: '#007AFF',
+    borderRadius: 25,
+    padding: 10,
+  },
+
   buttonContainer: {
     position: 'absolute',
     bottom: 40,
@@ -114,7 +143,6 @@ const styles = StyleSheet.create({
     right: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: 'transparent',
   },
   button: {
     backgroundColor: '#007AFF',
