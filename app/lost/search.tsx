@@ -21,7 +21,7 @@ export default function SearchDetailScreen() {
     latitudeDelta: 0.005,
     longitudeDelta: 0.005,
   });
-
+  // 画像選択のための関数
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       allowsMultipleSelection: true,
@@ -32,16 +32,18 @@ export default function SearchDetailScreen() {
       setImages([...images, ...result.assets.map(asset => asset.uri)]);
     }
   };
+  // 画像を削除する関数
+  const removeImage = (index: number) => {
+  setImages(prevImages => prevImages.filter((_, i) => i !== index));
+};
 
+  // 検索ボタンを押したときの処理
   const handleSearch = () => {
-    console.log({
-      images,
-      kind,
-      dateRange,
-      location: region,
-      details,
-    });
-  };
+  router.push(
+    `/lost/search_map?latitude=${region.latitude}&longitude=${region.longitude}`
+  );
+};
+
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -55,10 +57,19 @@ export default function SearchDetailScreen() {
         <Text>＋ 画像を選ぶ</Text>
       </TouchableOpacity>
       <ScrollView horizontal>
-        {images.map((uri, i) => (
-          <Image key={i} source={{ uri }} style={styles.image} />
-        ))}
-      </ScrollView>
+  {images.map((uri, i) => (
+    <View key={i} style={{ position: 'relative', marginRight: 8 }}>
+      <Image source={{ uri }} style={styles.image} />
+      <TouchableOpacity
+        onPress={() => removeImage(i)}
+        style={styles.removeImageButton}
+      >
+        <Text style={styles.removeImageText}>✕</Text>
+      </TouchableOpacity>
+    </View>
+  ))}
+</ScrollView>
+
 
       {/* KIND */}
       <Text style={styles.label}>🧾 KIND</Text>
@@ -193,4 +204,22 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 16,
   },
+  removeImageButton: {
+  position: 'absolute',
+  top: -8,
+  right: -8,
+  backgroundColor: 'rgba(0,0,0,0.6)',
+  borderRadius: 12,
+  width: 24,
+  height: 24,
+  alignItems: 'center',
+  justifyContent: 'center',
+  zIndex: 1,
+},
+removeImageText: {
+  color: '#fff',
+  fontSize: 14,
+  fontWeight: 'bold',
+},
+
 });

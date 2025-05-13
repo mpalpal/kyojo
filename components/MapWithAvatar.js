@@ -48,7 +48,7 @@ export default function MapWithAvatar() {
     };
   }, []);
 
-  const handleLostPress = () => router.push('/lost');
+  const handleLostPress = () => router.push('/lost/search');
   const handleFoundPress = () => router.push('/found');
   const handleTalkPress = () => router.push('/chat');
   const handleSettingsPress = () => router.push('/settings');
