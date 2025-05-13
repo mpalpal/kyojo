@@ -4,3 +4,4 @@ export default function App() {
   return <MapWithAvatar />;
 }
                        
+// 田中角栄
