@@ -21,10 +21,10 @@ export default function LostOptionsScreen() {
 
 
         {/* Record ボタン */}
-        <TouchableOpacity style={styles.bigButton} onPress={() => console.log('Record')}>
+        {/* <TouchableOpacity style={styles.bigButton} onPress={() => console.log('Record')}>
           <MaterialIcons name="menu-book" size={30} color="#fff" />
           <Text style={styles.buttonText}>Record</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
     </View>
   );
