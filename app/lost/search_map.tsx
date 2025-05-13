@@ -3,9 +3,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
-
+// 各ピンにカスタム吹き出しを追加する。
+import { Callout } from 'react-native-maps';
+// 
 export default function SearchMapScreen() {
   const router = useRouter();
   const mapRef = useRef<MapView>(null);
@@ -41,12 +43,19 @@ export default function SearchMapScreen() {
         initialRegion={center}
       >
         {markers.map((marker, index) => (
-          <Marker
-            key={index}
-            coordinate={marker}
-            title={`候補 ${index + 1}`}
-            description="検索条件に類似"
-          />
+        <Marker key={index} coordinate={marker}>
+  <Callout onPress={() => router.push(`/lost/check_item?index=${index + 1}`)}>
+    <View style={{ width: 150 }}>
+      <Text style={{ fontWeight: 'bold' }}>候補 {index + 1}</Text>
+      <TouchableOpacity
+        style={styles.calloutButton}
+        onPress={() => router.push(`/lost/check_item?index=${index + 1}`)}
+      >
+        <Text style={styles.calloutButtonText}>チェックする</Text>
+      </TouchableOpacity>
+    </View>
+  </Callout>
+</Marker>
         ))}
       </MapView>
 
@@ -57,6 +66,14 @@ export default function SearchMapScreen() {
       <TouchableOpacity style={styles.compassButton} onPress={recenterMap}>
         <Ionicons name="locate" size={24} color="#fff" />
       </TouchableOpacity>
+
+      <TouchableOpacity
+  style={styles.registerButton}
+  onPress={() => router.push('/lost/register')}
+>
+  <Text style={styles.registerButtonText}>みつからない場合は…</Text>
+</TouchableOpacity>
+
     </View>
   );
 }
@@ -85,4 +102,34 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     padding: 10,
   },
+  calloutButton: {
+  marginTop: 8,
+  backgroundColor: '#007AFF',
+  paddingVertical: 6,
+  paddingHorizontal: 10,
+  borderRadius: 6,
+  alignItems: 'center',
+},
+calloutButtonText: {
+  color: '#fff',
+  fontWeight: '600',
+  fontSize: 14,
+},
+registerButton: {
+  position: 'absolute',
+  bottom: 30,
+  left: 20,
+  right: 20,
+  backgroundColor: '#FF3B30',
+  paddingVertical: 14,
+  borderRadius: 10,
+  alignItems: 'center',
+},
+registerButtonText: {
+  color: '#fff',
+  fontWeight: 'bold',
+  fontSize: 16,
+},
+
+
 });
