@@ -13,7 +13,7 @@ export default function MapWithAvatar() {
   const [heading, setHeading] = useState(0);
   const mapRef = useRef(null);
   const router = useRouter();
-
+  // 位置情報を取得する関数
   useEffect(() => {
     let locationSubscription;
     let headingSubscription;
