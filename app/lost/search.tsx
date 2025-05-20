@@ -4,8 +4,8 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import MapView from 'react-native-maps';
+import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import MapView, { MapPressEvent, Marker } from 'react-native-maps';
 
 export default function SearchDetailScreen() {
   const router = useRouter();
@@ -21,6 +21,11 @@ export default function SearchDetailScreen() {
     latitudeDelta: 0.005,
     longitudeDelta: 0.005,
   });
+  // ピンとして表示する位置
+  const [selectedLocation, setSelectedLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
   // 画像選択のための関数
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -39,10 +44,32 @@ export default function SearchDetailScreen() {
 
   // 検索ボタンを押したときの処理
   const handleSearch = () => {
+    if (images.length < 1) {
+      Alert.alert(
+        '画像が足りません',
+        '画像を1枚以上選択してください。'
+      );
+      return;
+    }
+    if (!selectedLocation) {
+      Alert.alert(
+        '場所を指定してください。',
+        'マップを移動して場所を選択してください。'
+      );
+      return;
+    }
+    // 検索結果画面に遷移
   router.push(
     `/lost/search_map?latitude=${region.latitude}&longitude=${region.longitude}`
   );
 };
+
+  // 地図タップ時の処理
+  const handleMapPress = (event: MapPressEvent) => {
+  const { latitude, longitude } = event.nativeEvent.coordinate;
+  setSelectedLocation({ latitude, longitude });
+  };
+  
 
 
   return (
@@ -119,7 +146,12 @@ export default function SearchDetailScreen() {
         style={styles.map}
         region={region}
         onRegionChangeComplete={setRegion}
-      />
+        onPress={handleMapPress}
+        >
+        {selectedLocation && (
+            <Marker coordinate={selectedLocation} />
+        )}
+        </MapView>
 
       {/* DETAILS */}
       <Text style={styles.label}>💬 DETAILS</Text>
