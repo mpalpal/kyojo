@@ -1,11 +1,15 @@
 // app/lost/search-detail.tsx
 
-import DateTimePicker from '@react-native-community/datetimepicker';
+import { MaterialIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import MapView, { MapPressEvent, Marker } from 'react-native-maps';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
+
+
+
 
 export default function SearchDetailScreen() {
   const router = useRouter();
@@ -13,8 +17,8 @@ export default function SearchDetailScreen() {
   const [kind, setKind] = useState('');
   const [details, setDetails] = useState('');
   const [dateRange, setDateRange] = useState({ from: new Date(), to: new Date() });
-  const [showFromPicker, setShowFromPicker] = useState(false);
-  const [showToPicker, setShowToPicker] = useState(false);
+  // const [showFromPicker, setShowFromPicker] = useState(false);
+  // const [showToPicker, setShowToPicker] = useState(false);
   const [region, setRegion] = useState({
     latitude: 35.0266,
     longitude: 135.7809,
@@ -44,13 +48,13 @@ export default function SearchDetailScreen() {
 
   // 検索ボタンを押したときの処理
   const handleSearch = () => {
-    if (images.length < 1) {
-      Alert.alert(
-        '画像が足りません',
-        '画像を1枚以上選択してください。'
-      );
-      return;
-    }
+    // if (images.length < 1) {
+    //   Alert.alert(
+    //     '画像が足りません',
+    //     '画像を1枚以上選択してください。'
+    //   );
+    //   return;
+    // }
     if (!selectedLocation) {
       Alert.alert(
         '場所を指定してください。',
@@ -69,6 +73,11 @@ export default function SearchDetailScreen() {
   const { latitude, longitude } = event.nativeEvent.coordinate;
   setSelectedLocation({ latitude, longitude });
   };
+
+  //
+  const [isDatePickerVisible, setDatePickerVisible] = useState(false);
+  const [activePicker, setActivePicker] = useState<'from' | 'to' | null>(null);
+
   
 
 
@@ -99,21 +108,38 @@ export default function SearchDetailScreen() {
 
 
       {/* KIND */}
-      <Text style={styles.label}>🧾 KIND</Text>
-      <TextInput style={styles.input} value={kind} onChangeText={setKind} placeholder="例：赤い財布" />
+      {/* <Text style={styles.label}>🧾 KIND</Text>
+      <TextInput style={styles.input} value={kind} onChangeText={setKind} placeholder="例：赤い財布" /> */}
 
       {/* WHEN */}
       <Text style={styles.label}>📅 WHEN（範囲指定）</Text>
       <View style={styles.row}>
-        <TouchableOpacity onPress={() => setShowFromPicker(true)} style={styles.dateButton}>
-          <Text>{dateRange.from.toDateString()}</Text>
-        </TouchableOpacity>
-        <Text>〜</Text>
-        <TouchableOpacity onPress={() => setShowToPicker(true)} style={styles.dateButton}>
-          <Text>{dateRange.to.toDateString()}</Text>
-        </TouchableOpacity>
-      </View>
-      {showFromPicker && (
+  <TouchableOpacity
+    onPress={() => {
+      setActivePicker('from');
+      setDatePickerVisible(true);
+    }}
+    style={styles.dateButton}
+  >
+    <MaterialIcons name="calendar-today" size={20} color="#007AFF" />
+    <Text style={{ marginLeft: 8 }}>{dateRange.from.toLocaleDateString()}</Text>
+  </TouchableOpacity>
+
+  <Text style={{ marginHorizontal: 8 }}>〜</Text>
+
+  <TouchableOpacity
+    onPress={() => {
+      setActivePicker('to');
+      setDatePickerVisible(true);
+    }}
+    style={styles.dateButton}
+  >
+    <MaterialIcons name="calendar-today" size={20} color="#007AFF" />
+    <Text style={{ marginLeft: 8 }}>{dateRange.to.toLocaleDateString()}</Text>
+  </TouchableOpacity>
+</View>
+
+      {/* {showFromPicker && (
         <DateTimePicker
           value={dateRange.from}
           mode="date"
@@ -138,7 +164,26 @@ export default function SearchDetailScreen() {
             }
           }}
         />
-      )}
+      )} */}
+      <DateTimePickerModal
+  isVisible={isDatePickerVisible}
+  mode="date"
+  onConfirm={(date) => {
+    setDatePickerVisible(false);
+    if (activePicker === 'from') {
+      setDateRange(prev => ({ ...prev, from: date }));
+    } else if (activePicker === 'to') {
+      setDateRange(prev => ({ ...prev, to: date }));
+    }
+    setActivePicker(null);
+  }}
+  onCancel={() => {
+    setDatePickerVisible(false);
+    setActivePicker(null);
+  }}
+  date={activePicker === 'from' ? dateRange.from : dateRange.to}
+/>
+
 
       {/* WHERE */}
       <Text style={styles.label}>🗺️ WHERE</Text>
@@ -253,5 +298,4 @@ removeImageText: {
   fontSize: 14,
   fontWeight: 'bold',
 },
-
 });
