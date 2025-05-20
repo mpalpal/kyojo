@@ -11,8 +11,8 @@ import MapView, { MapPressEvent, Marker } from 'react-native-maps';
 export default function RegisterFoundItem() {
     const router = useRouter();
     const [images, setImages] = useState<string[]>([]);
-    const [showFromPicker, setShowFromPicker] = useState(false);
-    const [showToPicker, setShowToPicker] = useState(false);
+    // const [showFromPicker, setShowFromPicker] = useState(false);
+    // const [showToPicker, setShowToPicker] = useState(false);
     const initialRegion = {
         latitude: 35.0266,
         longitude: 135.7809,
@@ -26,6 +26,7 @@ export default function RegisterFoundItem() {
     longitude: number;
     } | null>(null);
 
+    // 画像選択のための関数
     const pickImage = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
             allowsMultipleSelection: true,
@@ -35,6 +36,7 @@ export default function RegisterFoundItem() {
             setImages([...images, ...result.assets.map(asset => asset.uri)]);
         }
     };
+    // 画像を削除する関数
     const removeImage = (index: number) => {
         setImages(prevImages => prevImages.filter((_, i) => i !== index));
     };
