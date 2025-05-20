@@ -49,7 +49,7 @@ export default function MapWithAvatar() {
   }, []);
 
   const handleLostPress = () => router.push('/lost/search');
-  const handleFoundPress = () => router.push('/found');
+  const handleFoundPress = () => router.push('/found/register');
   const handleTalkPress = () => router.push('/chat');
   const handleSettingsPress = () => router.push('/settings');
 

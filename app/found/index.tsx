@@ -9,7 +9,7 @@ export default function FoundIndex() {
     <View style={styles.container}>
       <Text style={styles.title}>見つけた！</Text>
 
-      <TouchableOpacity style={styles.button} onPress={() => router.push('/found/report')}>
+      <TouchableOpacity style={styles.button} onPress={() => router.push('/found/register')}>
         <Text style={styles.buttonText}>落とし物を登録</Text>
       </TouchableOpacity>
 
