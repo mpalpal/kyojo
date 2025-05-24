@@ -58,7 +58,7 @@ export default function RegisterScreen() {
       <TouchableOpacity style={styles.button} onPress={handleRegister}>
         <Text style={styles.buttonText}>アカウントを作成</Text>
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => router.push('/auth/login')}>
+      <TouchableOpacity onPress={() => router.push('/auth/login' as any)}>
         <Text style={styles.linkText}>ログイン画面に戻る</Text>
       </TouchableOpacity>
     </View>
