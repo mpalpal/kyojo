@@ -1,5 +1,6 @@
 from fastapi import FastAPI, UploadFile, File, Form, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from typing import List
 from sqlalchemy.orm import Session
 from database import engine, SessionLocal, Base
@@ -7,6 +8,7 @@ from models import LostItem
 import shutil
 import os
 from datetime import datetime
+import random
 
 app = FastAPI()
 
@@ -18,6 +20,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # DB初期化
 Base.metadata.create_all(bind=engine)
@@ -65,3 +69,19 @@ async def register_lost_item(
     db.refresh(lost_item)
 
     return {"message": "登録完了", "item_id": lost_item.id}
+
+
+@app.get("/api/lost-items")
+def get_lost_items(db: Session = Depends(get_db)):
+    items = db.query(LostItem).all()
+    random_items = random.sample(items, min(3, len(items)))
+    return [
+        {
+            "id": item.id,
+            "latitude": item.latitude,
+            "longitude": item.longitude,
+            "details": item.details,
+            "image_url": item.image_urls.split(',')[0] if item.image_urls else None,
+        }
+        for item in random_items
+    ]
