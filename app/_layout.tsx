@@ -6,22 +6,22 @@ import { useAuth } from '../hooks/useAuth';
 
 export default function RootLayout() {
   const { user, loading } = useAuth();
-  const segments = useSegments();
+  const segments = useSegments(); // string[][]
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading) {
-      const inAuthGroup = segments[0] === 'auth';
+    if (loading) return;
 
-      if (!user && !inAuthGroup) {
-        router.replace('/auth/login');
-      }
+    const currentGroup = segments[0]?.[0]; // e.g., 'auth' or 'found'
 
-      if (user && inAuthGroup) {
-        router.replace('/');
-      }
+    const inAuthGroup = currentGroup === 'auth';
+
+    if (!user && !inAuthGroup) {
+      router.replace('/auth/login');
+    } else if (user && inAuthGroup) {
+      router.replace('/');
     }
-  }, [user, loading]);
+  }, [user, loading, segments]);
 
   if (loading) {
     return (
