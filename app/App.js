@@ -1,7 +1,12 @@
-import MapWithAvatar from '../components/MapWithAvatar';
+//import MapWithAvatar from '../components/MapWithAvatar';
+
+//export default function App() {
+//  return <MapWithAvatar />;
+//}
+
+import { ExpoRoot } from 'expo-router';
 
 export default function App() {
-  return <MapWithAvatar />;
+  const ctx = require.context('./app');
+  return <ExpoRoot context={ctx} />;
 }
-                       
-// 田中角栄

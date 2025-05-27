@@ -1,3 +1,4 @@
+console.log("LoginScreen loaded");
 import { useRouter } from 'expo-router';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { useState } from 'react';
