@@ -5,7 +5,8 @@
     "jsx": "react-native",
     "baseUrl": ".",
     "paths": {
-      "~/*": ["./*"]
+      "~/*": ["./*"],
+      "@/*": ["./*"]
     },
     "resolveJsonModule": true,
     "esModuleInterop": true,
