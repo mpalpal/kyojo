@@ -76,7 +76,7 @@ export default function SearchMapScreen() {
         <View style={{ width: 200 }}>
           {marker.image_url && (
             <Image
-              source={{ uri: `https://5149-133-3-201-39.ngrok-free.app/uploads/${marker.image_url}` }}
+              source={{ uri: `https://5149-133-3-201-39.ngrok-free.app/${marker.image_url}` }}
               style={{ width: '100%', height: 100, borderRadius: 6, marginBottom: 8 }}
               resizeMode="cover"
             />

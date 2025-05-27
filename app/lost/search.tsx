@@ -2,12 +2,12 @@
 
 import { MaterialIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import MapView, { MapPressEvent, Marker } from 'react-native-maps';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
-
+const { token } = useLocalSearchParams();
 
 
 
@@ -92,6 +92,7 @@ export default function SearchDetailScreen() {
       body: formData,
       headers: {
         'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer ${token}`, // ← 🔥 トークンを追加
       },
     });
 
