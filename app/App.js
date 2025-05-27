@@ -1,12 +1,6 @@
-//import MapWithAvatar from '../components/MapWithAvatar';
-
-//export default function App() {
-//  return <MapWithAvatar />;
-//}
-
 import { ExpoRoot } from 'expo-router';
 
 export default function App() {
-  const ctx = require.context('./app');
+  const ctx = require.context('./app'); // ← app フォルダを Expo Router に渡す
   return <ExpoRoot context={ctx} />;
 }
