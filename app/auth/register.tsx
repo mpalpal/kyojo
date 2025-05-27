@@ -43,7 +43,7 @@ export default function RegisterScreen() {
     try {
       await createUserWithEmailAndPassword(auth, email, password);
       Alert.alert('登録成功');
-      router.replace('/'); // ログイン後の画面へ
+      router.replace('/'); // 登録後のトップ画面へ遷移
     } catch (error: any) {
       Alert.alert('登録エラー', error.message);
     }
