@@ -17,8 +17,6 @@ export default function SearchDetailScreen() {
   const [kind, setKind] = useState('');
   const [details, setDetails] = useState('');
   const [dateRange, setDateRange] = useState({ from: new Date(), to: new Date() });
-  // const [showFromPicker, setShowFromPicker] = useState(false);
-  // const [showToPicker, setShowToPicker] = useState(false);
   const [region, setRegion] = useState({
     latitude: 35.0266,
     longitude: 135.7809,
@@ -47,26 +45,67 @@ export default function SearchDetailScreen() {
 };
 
   // 検索ボタンを押したときの処理
-  const handleSearch = () => {
-    // if (images.length < 1) {
-    //   Alert.alert(
-    //     '画像が足りません',
-    //     '画像を1枚以上選択してください。'
-    //   );
-    //   return;
-    // }
-    if (!selectedLocation) {
-      Alert.alert(
-        '場所を指定してください。',
-        'マップを移動して場所を選択してください。'
-      );
-      return;
+//   const handleSearch = () => {
+//     if (!selectedLocation) {
+//       Alert.alert(
+//         '場所を指定してください。',
+//         'マップを移動して場所を選択してください。'
+//       );
+//       return;
+//     }
+//     // 検索結果画面に遷移
+//   router.push(
+//     `/lost/search_map?latitude=${region.latitude}&longitude=${region.longitude}`
+//   );
+// };
+
+  const handleSearch = async () => {
+  if (!selectedLocation) {
+    Alert.alert('場所を指定してください。', 'マップを移動して場所を選択してください。');
+    return;
+  }
+
+  const formData = new FormData();
+
+  images.forEach((uri, index) => {
+    const filename = uri.split('/').pop();
+    const match = /\.(\w+)$/.exec(filename ?? '');
+    const type = match ? `image/${match[1]}` : `image`;
+
+    formData.append('images', {
+      uri,
+      name: filename,
+      type,
+    } as any); // 型エラーを避けるため
+  });
+
+  formData.append('details', details);
+  formData.append('kind', kind);
+  formData.append('date_from', dateRange.from.toISOString());
+  formData.append('date_to', dateRange.to.toISOString());
+  formData.append('latitude', String(selectedLocation.latitude));
+  formData.append('longitude', String(selectedLocation.longitude));
+
+  try {
+    const response = await fetch('https://f114-133-3-201-39.ngrok-free.app/api/lost-items', {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('送信に失敗しました');
     }
-    // 検索結果画面に遷移
-  router.push(
-    `/lost/search_map?latitude=${region.latitude}&longitude=${region.longitude}`
-  );
+
+    Alert.alert('送信完了', '検索条件が保存されました');
+    router.push(`/lost/search_map?latitude=${region.latitude}&longitude=${region.longitude}`);
+  } catch (error) {
+    Alert.alert('エラー', (error as Error).message);
+  }
 };
+
 
   // 地図タップ時の処理
   const handleMapPress = (event: MapPressEvent) => {
@@ -105,12 +144,6 @@ export default function SearchDetailScreen() {
     </View>
   ))}
 </ScrollView>
-
-
-      {/* KIND */}
-      {/* <Text style={styles.label}>🧾 KIND</Text>
-      <TextInput style={styles.input} value={kind} onChangeText={setKind} placeholder="例：赤い財布" /> */}
-
       {/* WHEN */}
       <Text style={styles.label}>📅 WHEN（範囲指定）</Text>
       <View style={styles.row}>
@@ -138,33 +171,6 @@ export default function SearchDetailScreen() {
     <Text style={{ marginLeft: 8 }}>{dateRange.to.toLocaleDateString()}</Text>
   </TouchableOpacity>
 </View>
-
-      {/* {showFromPicker && (
-        <DateTimePicker
-          value={dateRange.from}
-          mode="date"
-          display="default"
-          onChange={(event, selectedDate) => {
-            setShowFromPicker(false);
-            if (selectedDate) {
-              setDateRange(prev => ({ ...prev, from: selectedDate }));
-            }
-          }}
-        />
-      )}
-      {showToPicker && (
-        <DateTimePicker
-          value={dateRange.to}
-          mode="date"
-          display="default"
-          onChange={(event, selectedDate) => {
-            setShowToPicker(false);
-            if (selectedDate) {
-              setDateRange(prev => ({ ...prev, to: selectedDate }));
-            }
-          }}
-        />
-      )} */}
       <DateTimePickerModal
   isVisible={isDatePickerVisible}
   mode="date"
