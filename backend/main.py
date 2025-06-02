@@ -9,7 +9,8 @@ from fastapi import Depends, FastAPI, File, Form, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from match import get_match_score
-from models import FoundItem, LostItem, MatchScore
+from models import (FoundItem, LostItem, LostItemLocation, LostItemQuizAnswer,
+                    MatchScore)
 from sqlalchemy.orm import Session
 
 app = FastAPI()
@@ -44,14 +45,10 @@ async def register_lost_item(
     kind: str = Form(...),
     date_from: str = Form(...),
     date_to: str = Form(...),
-    latitude: float = Form(...),
-    longitude: float = Form(...),
+    location_notes: str = Form(""),
     db: Session = Depends(get_db)
 ):
-    # try:
-    #     print(await request.form())
-    # except Exception as e:
-    #     print(f"Error reading request: {e}")
+    
     form_data = await request.form()
     print("Received fields:", form_data.keys())
 
@@ -72,13 +69,47 @@ async def register_lost_item(
         kind=kind,
         date_from=datetime.fromisoformat(date_from),
         date_to=datetime.fromisoformat(date_to),
-        latitude=latitude,
-        longitude=longitude,
+        location_notes=location_notes,
         image_urls=",".join(saved_paths)
     )
     db.add(lost_item)
     db.commit()
     db.refresh(lost_item)
+
+    # Save locations
+    index = 0
+    while True:
+        lat_key = f"locations[{index}][latitude]"
+        lon_key = f"locations[{index}][longitude]"
+        if lat_key in form_data and lon_key in form_data:
+            lat = float(form_data[lat_key])
+            lon = float(form_data[lon_key])
+            location = LostItemLocation(
+                item_id=lost_item.id,
+                latitude=lat,
+                longitude=lon,
+            )
+            db.add(location)
+            index += 1
+        else:
+            break
+
+    # Save quiz answers
+    i = 0
+    while True:
+        key = f"quiz_answers[{i}]"
+        if key in form_data:
+            answer = form_data[key]
+            quiz = LostItemQuizAnswer(
+                item_id=lost_item.id,
+                answer=answer,
+            )
+            db.add(quiz)
+            i += 1
+        else:
+            break
+
+    db.commit()
 
     match_lost_item(lost_item, db) # run matching algorithm
 
@@ -92,8 +123,8 @@ def get_lost_items(db: Session = Depends(get_db)):
     return [
         {
             "id": item.id,
-            "latitude": item.latitude,
-            "longitude": item.longitude,
+            "latitude": item.locations[0].latitude if item.locations else None,
+            "longitude": item.locations[0].longitude if item.locations else None,
             "details": item.details,
             "image_url": item.image_urls.split(',')[0] if item.image_urls else None,
         }
