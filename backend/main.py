@@ -281,7 +281,7 @@ def get_matched_found_items(lost_item_id: int, db: Session = Depends(get_db)):
             "id": item.id,
             "latitude": item.latitude,
             "longitude": item.longitude,
-            "details": "",  # Optionally include more info
+            "location_notes": item.location_notes,
             "image_url": item.image_urls.split(',')[0] if item.image_urls else None,
         }
         for item in found_items

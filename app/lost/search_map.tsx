@@ -15,7 +15,7 @@ type MarkerData = {
   id: number;
   latitude: number;
   longitude: number;
-  details: string;
+  location_notes: string;
   image_url: string | null;
 };
 
@@ -23,7 +23,7 @@ export default function SearchMapScreen() {
   const router = useRouter();
   const mapRef = useRef<MapView>(null);
   const { latitude, longitude, lost_item_id } = useLocalSearchParams();
-  console.log("lost_item_id:", lost_item_id);
+  console.log("lost_item_id (from search_map):", lost_item_id);
 
 
   const center = {
@@ -40,38 +40,44 @@ export default function SearchMapScreen() {
   };
 
   useEffect(() => {
-  const fetchMarkers = async () => {
-    try {
+    const fetchMarkers = async () => {
+      try {
 
-      const res = await fetch(`https://fc59-2400-4150-9180-b500-8891-8d59-e8f4-33ed.ngrok-free.app/api/matched-found-items?lost_item_id=${lost_item_id}`, {
-        method: 'GET'
-      });
-      if (!res.ok) {
-        console.error('❌ HTTPエラー', res.status);
-        return;
+        const res = await fetch(`https://fc59-2400-4150-9180-b500-8891-8d59-e8f4-33ed.ngrok-free.app/api/matched-found-items?lost_item_id=${lost_item_id}`, {
+          method: 'GET'
+        });
+        if (!res.ok) {
+          console.error('❌ HTTPエラー', res.status);
+          return;
+        }
+
+        const data = await res.json();
+
+        if (!Array.isArray(data)) {
+          console.error('❌ 不正な形式のレスポンス:', data);
+          return;
+        }
+
+        setMarkers(data);
+      } catch (error) {
+        console.error('❌ ネットワークまたはJSONパースエラー:', error);
       }
+    };
 
-      const data = await res.json();
+    if (!lost_item_id) return;
 
-      if (!Array.isArray(data)) {
-        console.error('❌ 不正な形式のレスポンス:', data);
-        return;
-      }
+    const timeout = setTimeout(() => {
+      fetchMarkers();
+      console.log("Markers:", markers);
+    }, 300);
 
-      setMarkers(data);
-    } catch (error) {
-      console.error('❌ ネットワークまたはJSONパースエラー:', error);
-    }
-  };
-
-  fetchMarkers();
-  console.log("Markers:", markers);
-}, []);
+    return () => clearTimeout(timeout);
+}, [lost_item_id]);
 
 
   return (
     <View style={styles.container}>
-      <MapView ref={mapRef} style={styles.map} initialRegion={center}>
+      <MapView ref={mapRef} style={styles.map} initialRegion={center} key={markers.length}>
         {markers.map((marker, index) => (
           <Marker
             key={marker.id}
@@ -86,8 +92,8 @@ export default function SearchMapScreen() {
                     resizeMode="cover"
                   />
                 )}
-                <Text style={{ fontWeight: 'bold', marginBottom: 4 }}>説明</Text>
-                <Text numberOfLines={3}>{marker.details}</Text>
+                <Text style={{ fontWeight: 'bold', marginBottom: 4 }}>Found:</Text>
+                <Text numberOfLines={3}>{marker.location_notes}</Text>
                 <TouchableOpacity
                   style={styles.calloutButton}
                   onPress={() => router.push(`/lost/check_item?id=${marker.id}`)}
