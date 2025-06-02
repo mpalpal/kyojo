@@ -3,16 +3,31 @@ import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import MapView, { MapPressEvent, Marker } from 'react-native-maps';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
+
 
 export default function SearchDetailScreen() {
   const router = useRouter();
   const mapRef = useRef<MapView>(null);
 
   const [images, setImages] = useState<string[]>([]);
-  const [kind, setKind] = useState('');
+
+  const SUPPORTED_CATEGORIES = [
+    { label: '📱 Phone', value: 'phone' },
+    { label: '👛 Wallet', value: 'wallet' },
+    { label: '🎒 Bag', value: 'bag' },
+    { label: '🔑 Keys', value: 'keys' },
+    { label: '📦 Others', value: 'others' }
+  ];
+
+  // Inside your component
+  const [menuVisible, setMenuVisible] = useState(false);
+  const [selectedKind, setSelectedKind] = useState(SUPPORTED_CATEGORIES[0]);
+  const openMenu = () => setMenuVisible(true);
+  const closeMenu = () => setMenuVisible(false); 
+  const [kind, setKind] = useState('📱 Phone'); // initial state
   const [details, setDetails] = useState('');
   const [locationNotes, setLocationNotes] = useState('');
   const [region, setRegion] = useState({
@@ -203,8 +218,47 @@ export default function SearchDetailScreen() {
         ))}
       </ScrollView>
 
+      {/* <Text style={styles.label}> KIND（落とし物の種類）</Text>
+      <TextInput style={styles.input} value={kind} onChangeText={setKind} placeholder="例：赤い財布" /> */}
+
       <Text style={styles.label}> KIND（落とし物の種類）</Text>
-      <TextInput style={styles.input} value={kind} onChangeText={setKind} placeholder="例：赤い財布" />
+      <TouchableOpacity
+        style={styles.categoryButton}
+        onPress={() => setMenuVisible(true)}
+      >
+        <Text style={styles.categoryButtonText}>{selectedKind.label}</Text>
+      </TouchableOpacity>
+
+      <Modal
+        visible={menuVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setMenuVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPressOut={() => setMenuVisible(false)}
+        >
+          <View style={styles.dropdownMenu}>
+            {SUPPORTED_CATEGORIES.map((item) => (
+              <TouchableOpacity
+                key={item.value}
+                style={styles.dropdownItem}
+                onPress={() => {
+                  setSelectedKind(item);
+                  setKind(item.value);
+                  setMenuVisible(false);
+                }}
+              >
+                <Text style={styles.dropdownItemText}>{item.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+
 
       <Text style={styles.label}> WHEN（落とした日を選択）</Text>
       <View style={styles.row}>
@@ -436,5 +490,51 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
     fontWeight: 'bold',
+  },
+  categoryButton: {
+  borderWidth: 1,
+  borderColor: '#ccc',
+  borderRadius: 8,
+  paddingVertical: 12,
+  paddingHorizontal: 16,
+  backgroundColor: '#fff',
+  marginBottom: 10,
+  },
+  categoryButtonText: {
+    fontSize: 16,
+    color: '#333',
+    textAlign: 'center',
+  },
+
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    paddingHorizontal: 30,
+  },
+
+  dropdownMenu: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    paddingVertical: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+
+  dropdownItem: {
+    width: '100%',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    alignItems: 'flex-start',
+  },
+
+  dropdownItemText: {
+    fontSize: 16,
+    color: '#333',
+    textAlign: 'left',
+    width: '100%',
   },
 });

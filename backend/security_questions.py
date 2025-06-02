@@ -17,8 +17,7 @@ SECURITY_QUESTIONS = {
     ],
     "keys": [
         "How many keys were on the keychain?",
-        "Was there a keychain accessory? Describe it.",
-        "What kind of keys were they (car, house, etc)?"
+        "Was there a keychain accessory? If so, describe it."
     ],
     # Add more as needed
 }
