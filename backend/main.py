@@ -1,14 +1,16 @@
-from fastapi import FastAPI, UploadFile, File, Form, Depends
+import os
+import random
+import shutil
+from datetime import datetime
+from typing import List, Optional
+
+from database import Base, SessionLocal, engine
+from fastapi import Depends, FastAPI, File, Form, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from typing import List
+from match import get_match_score
+from models import FoundItem, LostItem, MatchScore
 from sqlalchemy.orm import Session
-from database import engine, SessionLocal, Base
-from models import LostItem
-import shutil
-import os
-from datetime import datetime
-import random
 
 app = FastAPI()
 
@@ -36,7 +38,8 @@ def get_db():
 
 @app.post("/api/lost-items")
 async def register_lost_item(
-    images: List[UploadFile] = File(...),
+    request: Request,
+    images: Optional[List[UploadFile]] = File(default=[]),
     details: str = Form(...),
     kind: str = Form(...),
     date_from: str = Form(...),
@@ -45,9 +48,18 @@ async def register_lost_item(
     longitude: float = Form(...),
     db: Session = Depends(get_db)
 ):
+    # try:
+    #     print(await request.form())
+    # except Exception as e:
+    #     print(f"Error reading request: {e}")
+    form_data = await request.form()
+    print("Received fields:", form_data.keys())
+
     # 画像保存
     os.makedirs("uploads", exist_ok=True)
     saved_paths = []
+
+
     for img in images:
         file_path = f"uploads/{img.filename}"
         with open(file_path, "wb") as f:
@@ -68,6 +80,8 @@ async def register_lost_item(
     db.commit()
     db.refresh(lost_item)
 
+    match_lost_item(lost_item, db) # run matching algorithm
+
     return {"message": "登録完了", "item_id": lost_item.id}
 
 
@@ -85,3 +99,104 @@ def get_lost_items(db: Session = Depends(get_db)):
         }
         for item in random_items
     ]
+
+@app.post("/api/found-items")
+async def register_found_item(
+    images: List[UploadFile] = File(...),
+    details: str = Form(...),
+    kind: str = Form(...),
+    date_found: str = Form(...),
+    latitude: float = Form(...),
+    longitude: float = Form(...),
+    db: Session = Depends(get_db)
+):
+    # 画像保存
+    os.makedirs("uploads", exist_ok=True)
+    saved_paths = []
+    for img in images:
+        file_path = f"uploads/{img.filename}"
+        with open(file_path, "wb") as f:
+            shutil.copyfileobj(img.file, f)
+        saved_paths.append(file_path)
+
+    # データベース登録
+    found_item = FoundItem(
+        details=details,
+        kind=kind,
+        date_found=datetime.fromisoformat(date_found),
+        latitude=latitude,
+        longitude=longitude,
+        image_urls=",".join(saved_paths)
+    )
+    db.add(found_item)
+    db.commit()
+    db.refresh(found_item)
+
+    match_found_item(found_item, db)  # run matching algorithm
+
+    return {"message": "登録完了", "item_id": found_item.id}
+
+@app.get("/api/found-items")
+def get_found_items(db: Session = Depends(get_db)):
+    items = db.query(FoundItem).all()
+    random_items = random.sample(items, min(3, len(items)))
+    return [
+        {
+            "id": item.id,
+            "latitude": item.latitude,
+            "longitude": item.longitude,
+            "details": item.details,
+            "image_url": item.image_urls.split(',')[0] if item.image_urls else None,
+        }
+        for item in random_items
+    ]
+
+# when a new lost item is registered, calculate match scores against all found items
+def match_lost_item(lost_item: LostItem, db: Session):
+    found_items = db.query(FoundItem).all()
+    lost_image_paths = lost_item.image_urls.split(',') if lost_item.image_urls else []
+
+    for found in found_items:
+        found_image_paths = found.image_urls.split(',') if found.image_urls else []
+
+        score = get_match_score(
+            lost_description=lost_item.details,
+            lost_image_path=lost_image_paths[0] if lost_image_paths else None,
+            found_image_paths=found_image_paths
+        )
+
+        if isinstance(score, int) and score >= 3:  # Adjust threshold if needed
+            match = MatchScore(
+                lost_item_id=lost_item.id,
+                found_item_id=found.id,
+                score=float(score)
+            )
+            db.add(match)
+    db.commit()
+
+# when a new found item is registered, calculate match scores against all lost items
+def match_found_item(found_item: FoundItem, db: Session):
+    lost_items = db.query(LostItem).all()
+    found_image_paths = found_item.image_urls.split(',') if found_item.image_urls else []
+
+    for lost in lost_items:
+        lost_image_paths = lost.image_urls.split(',') if lost.image_urls else []
+
+        score = get_match_score(
+            lost_description=lost.details,
+            lost_image_path=lost_image_paths[0] if lost_image_paths else None,
+            found_image_paths=found_image_paths
+        )
+
+        if isinstance(score, int) and score >= 3:  # Acceptable match threshold
+            match = MatchScore(
+                lost_item_id=lost.id,
+                found_item_id=found_item.id,
+                score=float(score)
+            )
+            db.add(match)
+
+    db.commit()
+
+
+

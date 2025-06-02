@@ -3,13 +3,10 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import MapView, { MapPressEvent, Marker } from 'react-native-maps';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
-
-
-
 
 export default function SearchDetailScreen() {
   const router = useRouter();
@@ -67,18 +64,19 @@ export default function SearchDetailScreen() {
 
   const formData = new FormData();
 
-  images.forEach((uri, index) => {
-    const filename = uri.split('/').pop();
-    const match = /\.(\w+)$/.exec(filename ?? '');
-    const type = match ? `image/${match[1]}` : `image`;
+  if (images.length > 0 ){
+    images.forEach((uri, index) => {
+      const filename = uri.split('/').pop();
+      const match = /\.(\w+)$/.exec(filename ?? '');
+      const type = match ? `image/${match[1]}` : `image`;
 
-    formData.append('images', {
-      uri,
-      name: filename,
-      type,
-    } as any); // 型エラーを避けるため
-  });
-
+      formData.append('images', {
+        uri,
+        name: filename,
+        type,
+      } as any); // 型エラーを避けるため
+    });
+  }
   formData.append('details', details);
   formData.append('kind', kind);
   formData.append('date_from', dateRange.from.toISOString());
@@ -87,12 +85,12 @@ export default function SearchDetailScreen() {
   formData.append('longitude', String(selectedLocation.longitude));
 
   try {
-    const response = await fetch('https://5149-133-3-201-39.ngrok-free.app/api/lost-items', {
+    const response = await fetch('https://dcb4-2400-4150-9180-b500-8891-8d59-e8f4-33ed.ngrok-free.app/api/lost-items', {
       method: 'POST',
       body: formData,
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
+      // headers: {
+      //   'Content-Type': 'multipart/form-data',
+      // },
     });
 
     if (!response.ok) {

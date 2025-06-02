@@ -2,7 +2,7 @@
 
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 // 各ピンにカスタム吹き出しを追加する。
@@ -40,7 +40,9 @@ export default function SearchMapScreen() {
   useEffect(() => {
   const fetchMarkers = async () => {
     try {
-      const res = await fetch('https://5149-133-3-201-39.ngrok-free.app/api/lost-items');
+      // const res = await fetch('https://5149-133-3-201-39.ngrok-free.app/api/lost-items');
+
+      const res = await fetch('https://dcb4-2400-4150-9180-b500-8891-8d59-e8f4-33ed.ngrok-free.app/api/lost-items');
 
       if (!res.ok) {
         console.error('❌ HTTPエラー', res.status);
