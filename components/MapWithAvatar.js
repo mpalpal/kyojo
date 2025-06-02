@@ -3,27 +3,28 @@ import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
+import MapView from 'react-native-maps';
 
 export default function MapWithAvatar() {
-  const [position, setPosition] = useState({
-    latitude: 35.0266,
-    longitude: 135.7809,
-  });
+  const [position, setPosition] = useState(null);
   const [heading, setHeading] = useState(0);
   const mapRef = useRef(null);
   const router = useRouter();
 
   useEffect(() => {
-    let locationSubscription;
-    let headingSubscription;
+    let locationSubscription = null;
+    let headingSubscription = null;
 
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        console.warn('Permission to access location was denied');
+        console.warn('Permission denied');
         return;
       }
+
+      const location = await Location.getCurrentPositionAsync({});
+      const { latitude, longitude } = location.coords;
+      setPosition({ latitude, longitude });
 
       locationSubscription = await Location.watchPositionAsync(
         {
@@ -31,65 +32,71 @@ export default function MapWithAvatar() {
           timeInterval: 2000,
           distanceInterval: 1,
         },
-        (location) => {
-          const { latitude, longitude } = location.coords;
+        (loc) => {
+          const { latitude, longitude } = loc.coords;
           setPosition({ latitude, longitude });
         }
       );
 
-      headingSubscription = await Location.watchHeadingAsync((headingData) => {
-        setHeading(headingData.trueHeading ?? headingData.magHeading);
+      headingSubscription = await Location.watchHeadingAsync((hdg) => {
+        setHeading(hdg.trueHeading ?? hdg.magHeading);
       });
     })();
 
     return () => {
-      locationSubscription?.remove();
-      headingSubscription?.remove();
+      if (locationSubscription) locationSubscription.remove();
+      if (headingSubscription) headingSubscription.remove();
     };
   }, []);
+
+  useEffect(() => {
+    if (position && mapRef.current) {
+      mapRef.current.animateToRegion({
+        ...position,
+        latitudeDelta: 0.005,
+        longitudeDelta: 0.005,
+      }, 1000);
+    }
+  }, [position]);
 
   const handleLostPress = () => router.push('/lost/search');
   const handleFoundPress = () => router.push('/found/register');
   const handleTalkPress = () => router.push('/chat');
   const handleSettingsPress = () => router.push('/settings');
 
-  const recenterMap = () => {
-    mapRef.current?.animateToRegion(
-      {
-        ...position,
-        latitudeDelta: 0.005,
-        longitudeDelta: 0.005,
-      },
-      500
-    );
-  };
-
   return (
     <View style={styles.container}>
       <MapView
         ref={mapRef}
         style={styles.map}
+        showsUserLocation={true}
         showsCompass={false}
         showsMyLocationButton={false}
-        initialRegion={{
-          ...position,
-          latitudeDelta: 0.005,
-          longitudeDelta: 0.005,
-        }}
-      >
-        <Marker coordinate={position} title="あなた" />
-      </MapView>
+        initialRegion={
+          position
+            ? {
+                ...position,
+                latitudeDelta: 0.005,
+                longitudeDelta: 0.005,
+              }
+            : undefined
+        }
+      />
 
       <TouchableOpacity style={styles.settingsButton} onPress={handleSettingsPress}>
         <Ionicons name="settings-outline" size={28} color="#333" />
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.compassButton} onPress={recenterMap}>
-        <Animated.View
-          style={{
-            transform: [{ rotate: `${heading}deg` }],
-          }}
-        >
+      <TouchableOpacity style={styles.compassButton} onPress={() => {
+        if (position && mapRef.current) {
+          mapRef.current.animateToRegion({
+            ...position,
+            latitudeDelta: 0.005,
+            longitudeDelta: 0.005,
+          }, 500);
+        }
+      }}>
+        <Animated.View style={{ transform: [{ rotate: `${heading}deg` }] }}>
           <Ionicons name="compass-outline" size={26} color="#fff" />
         </Animated.View>
       </TouchableOpacity>
