@@ -87,11 +87,7 @@ export default function SearchDetailScreen() {
   formData.append('longitude', String(selectedLocation.longitude));
 
   try {
-<<<<<<< HEAD
-    const response = await fetch('https://5149-133-3-201-39.ngrok-free.app/api/lost-items', {
-=======
-    const response = await fetch('https://fb1e-240b-250-86a1-7400-107d-205e-5196-e2f3.ngrok-free.app/lost-items', {
->>>>>>> murai_branch
+    const response = await fetch('https://8807-240b-250-86a1-7400-799f-27f7-23ce-f0b9.ngrok-free.app/lost-items', {
       method: 'POST',
       body: formData,
       headers: {

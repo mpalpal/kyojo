@@ -40,7 +40,7 @@ export default function SearchMapScreen() {
   useEffect(() => {
   const fetchMarkers = async () => {
     try {
-      const res = await fetch('https://5149-133-3-201-39.ngrok-free.app/api/lost-items');
+      const res = await fetch('https://1a79-240b-250-86a1-7400-799f-27f7-23ce-f0b9.ngrok-free.app/api/lost-items');
 
       if (!res.ok) {
         console.error('❌ HTTPエラー', res.status);
@@ -76,11 +76,7 @@ export default function SearchMapScreen() {
         <View style={{ width: 200 }}>
           {marker.image_url && (
             <Image
-<<<<<<< HEAD
-              source={{ uri: `https://5149-133-3-201-39.ngrok-free.app/uploads/${marker.image_url}` }}
-=======
-              source={{ uri: `https://5149-133-3-201-39.ngrok-free.app/${marker.image_url}` }}
->>>>>>> murai_branch
+              source={{ uri: `https://1a79-240b-250-86a1-7400-799f-27f7-23ce-f0b9.ngrok-free.app/uploads/${marker.image_url}` }}
               style={{ width: '100%', height: 100, borderRadius: 6, marginBottom: 8 }}
               resizeMode="cover"
             />
