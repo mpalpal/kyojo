@@ -1,17 +1,24 @@
+# import logging
 import os
 import random
 import shutil
+# import sys
 from datetime import datetime
 from typing import List, Optional
 
 from database import Base, SessionLocal, engine
-from fastapi import Depends, FastAPI, File, Form, Request, UploadFile
+from fastapi import (BackgroundTasks, Depends, FastAPI, File, Form, Request,
+                     UploadFile)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from match import get_match_score
 from models import (FoundItem, LostItem, LostItemLocation, LostItemQuizAnswer,
                     MatchScore)
+from scripts.reset_db import reset_database
 from sqlalchemy.orm import Session
+
+# logger = logging.getLogger(__name__)
+# logger.info("logging started!")
 
 app = FastAPI()
 
@@ -27,6 +34,7 @@ app.add_middleware(
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # DB初期化
+reset_database() # delete all existing tables and create new ones
 Base.metadata.create_all(bind=engine)
 
 # DBセッション依存性
@@ -133,6 +141,7 @@ def get_lost_items(db: Session = Depends(get_db)):
 
 @app.post("/api/found-items")
 async def register_found_item(
+    background_tasks: BackgroundTasks,
     images: List[UploadFile] = File(...),
     kind: str = Form(...),
     date_found: str = Form(...),
@@ -165,7 +174,7 @@ async def register_found_item(
     db.commit()
     db.refresh(found_item)
 
-    match_found_item(found_item, db)  # run matching algorithm
+    background_tasks.add_task(match_found_item_safe, found_item.id) # run matching algorithm slowly
 
     return {"message": "登録完了", "item_id": found_item.id}
 
@@ -209,6 +218,8 @@ def match_lost_item(lost_item: LostItem, db: Session):
 
 # when a new found item is registered, calculate match scores against all lost items
 def match_found_item(found_item: FoundItem, db: Session):
+    print("Matching found item with lost items...")
+    # sys.stdout.flush()
     lost_items = db.query(LostItem).all()
     found_image_paths = found_item.image_urls.split(',') if found_item.image_urls else []
 
@@ -231,5 +242,11 @@ def match_found_item(found_item: FoundItem, db: Session):
 
     db.commit()
 
-
+def match_found_item_safe(found_item_id: int):
+    db = SessionLocal()
+    try:
+        found_item = db.query(FoundItem).get(found_item_id)
+        match_found_item(found_item, db)
+    finally:
+        db.close()
 
