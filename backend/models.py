@@ -43,11 +43,11 @@ class FoundItem(Base):
     __tablename__ = "found_items"
 
     id = Column(Integer, primary_key=True, index=True)
-    details = Column(String)
     kind = Column(String)
     date_found = Column(DateTime)
     latitude = Column(Float)
     longitude = Column(Float)
+    location_notes = Column(String)
     image_urls = Column(String)
     created_at = Column(DateTime, default=datetime.utcnow)
 

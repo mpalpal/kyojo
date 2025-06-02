@@ -113,7 +113,7 @@ export default function SearchDetailScreen() {
     });
 
     try {
-      const response = await fetch('https://eaac-2400-4150-9180-b500-8891-8d59-e8f4-33ed.ngrok-free.app/api/lost-items', {
+      const response = await fetch('https://bca2-2400-4150-9180-b500-8891-8d59-e8f4-33ed.ngrok-free.app/api/lost-items', {
         method: 'POST',
         body: formData,
         // headers: {

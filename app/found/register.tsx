@@ -4,14 +4,15 @@ import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import MapView, { MapPressEvent, Marker } from 'react-native-maps';
 
 
 export default function RegisterFoundItem() {
   const router = useRouter();
   const [images, setImages] = useState<(string | null)[]>([null, null]);
-
+  const [locationNotes, setLocationNotes] = useState('');
+  
   const initialRegion = {
     latitude: 35.0266,
     longitude: 135.7809,
@@ -48,7 +49,7 @@ export default function RegisterFoundItem() {
     setSelectedLocation({ latitude, longitude });
   };
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     if (images.some((uri) => uri === null)) {
       Alert.alert('画像が足りません', '2枚の画像を選んでください。');
       return;
@@ -59,9 +60,47 @@ export default function RegisterFoundItem() {
       return;
     }
 
-    router.push(
-      `/found/tmp?latitude=${selectedLocation.latitude}&longitude=${selectedLocation.longitude}`
-    );
+    const formData = new FormData();
+
+    images.forEach((uri, index) => {
+      if (uri) {
+        const filename = uri.split('/').pop();
+        const match = /\.(\w+)$/.exec(filename ?? '');
+        const type = match ? `image/${match[1]}` : `image`;
+
+        formData.append('images', {
+          uri,
+          name: filename,
+          type,
+        } as any);
+      }
+    });
+
+    
+    formData.append('kind', '不明'); // Or ask user for kind if needed
+    formData.append('date_found', new Date().toISOString());
+    formData.append('latitude', String(selectedLocation.latitude));
+    formData.append('longitude', String(selectedLocation.longitude));
+    formData.append('location_notes', locationNotes);
+
+    try {
+      const response = await fetch('https://bca2-2400-4150-9180-b500-8891-8d59-e8f4-33ed.ngrok-free.app/api/found-items', {
+      method: 'POST',
+      body: formData,
+      });
+
+      if (!response.ok) throw new Error('登録に失敗しました');
+
+      Alert.alert('登録完了', '落とし物が登録されました', [
+        {
+          text: 'OK',
+          onPress: () => router.push('/found/thank'), // thank you page
+        },
+      ]);
+    
+    } catch (error) {
+        Alert.alert('エラー', (error as Error).message);
+    }
   };
 
   const isReadyToSubmit = images.every((uri) => uri !== null) && selectedLocation;
@@ -124,6 +163,15 @@ export default function RegisterFoundItem() {
       >
         {selectedLocation && <Marker coordinate={selectedLocation} />}
       </MapView>
+      
+      <Text style={styles.subLabel}> 場所の詳細（ex.教室名）</Text>
+      <TextInput
+        style={[styles.input, { height: 80 }]}
+        multiline
+        placeholder="例：◯◯公園のベンチ付近"
+        value={locationNotes}
+        onChangeText={setLocationNotes}
+      />
 
       <TouchableOpacity
         style={[
@@ -161,6 +209,12 @@ const styles = StyleSheet.create({
     marginTop: 20,
     marginBottom: 8,
     fontSize: 16,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: 10,
   },
   imageGrid: {
     flexDirection: 'row',

@@ -134,13 +134,15 @@ def get_lost_items(db: Session = Depends(get_db)):
 @app.post("/api/found-items")
 async def register_found_item(
     images: List[UploadFile] = File(...),
-    details: str = Form(...),
     kind: str = Form(...),
     date_found: str = Form(...),
     latitude: float = Form(...),
     longitude: float = Form(...),
+    location_notes: str = Form(...),
     db: Session = Depends(get_db)
 ):
+    
+    print("Found item post request received")
     # 画像保存
     os.makedirs("uploads", exist_ok=True)
     saved_paths = []
@@ -152,11 +154,11 @@ async def register_found_item(
 
     # データベース登録
     found_item = FoundItem(
-        details=details,
         kind=kind,
         date_found=datetime.fromisoformat(date_found),
         latitude=latitude,
         longitude=longitude,
+        location_notes=location_notes,
         image_urls=",".join(saved_paths)
     )
     db.add(found_item)
@@ -176,7 +178,7 @@ def get_found_items(db: Session = Depends(get_db)):
             "id": item.id,
             "latitude": item.latitude,
             "longitude": item.longitude,
-            "details": item.details,
+            "location_notes": item.location_notes,
             "image_url": item.image_urls.split(',')[0] if item.image_urls else None,
         }
         for item in random_items

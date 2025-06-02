@@ -42,7 +42,7 @@ export default function SearchMapScreen() {
     try {
       // const res = await fetch('https://5149-133-3-201-39.ngrok-free.app/api/lost-items');
 
-      const res = await fetch('https://eaac-2400-4150-9180-b500-8891-8d59-e8f4-33ed.ngrok-free.app/api/lost-items');
+      const res = await fetch('https://bca2-2400-4150-9180-b500-8891-8d59-e8f4-33ed.ngrok-free.app/api/lost-items');
 
       if (!res.ok) {
         console.error('❌ HTTPエラー', res.status);
@@ -113,12 +113,9 @@ export default function SearchMapScreen() {
         <Ionicons name="locate" size={24} color="#fff" />
       </TouchableOpacity>
 
-      <TouchableOpacity
-  style={styles.registerButton}
-  onPress={() => router.push('/lost/register')}
->
-  <Text style={styles.registerButtonText}>みつからない場合は…</Text>
-</TouchableOpacity>
+      <TouchableOpacity style={styles.registerButton} onPress={() => router.push('/lost/register')}>
+        <Text style={styles.registerButtonText}>みつからない場合は…</Text>
+      </TouchableOpacity>
 
     </View>
   );
