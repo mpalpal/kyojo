@@ -2,12 +2,12 @@
 
 import { MaterialIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import MapView, { MapPressEvent, Marker } from 'react-native-maps';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
-
+const { token } = useLocalSearchParams();
 
 
 
@@ -87,11 +87,12 @@ export default function SearchDetailScreen() {
   formData.append('longitude', String(selectedLocation.longitude));
 
   try {
-    const response = await fetch('https://f114-133-3-201-39.ngrok-free.app/api/lost-items', {
+    const response = await fetch('https://fb1e-240b-250-86a1-7400-107d-205e-5196-e2f3.ngrok-free.app/lost-items', {
       method: 'POST',
       body: formData,
       headers: {
         'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer 2xnho4QqWg2aJQ5nMaXNyHszLqS_6am9vDN1bdcn684nzXcp4`, // ← 🔥 トークンを追加
       },
     });
 
