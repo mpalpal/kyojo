@@ -8,8 +8,10 @@ import MapView from 'react-native-maps';
 export default function MapWithAvatar() {
   const [position, setPosition] = useState(null);
   const [heading, setHeading] = useState(0);
+  const [isMapTouched, setIsMapTouched] = useState(false);
   const mapRef = useRef(null);
   const router = useRouter();
+  const touchTimeout = useRef(null);
 
   useEffect(() => {
     let locationSubscription = null;
@@ -50,14 +52,22 @@ export default function MapWithAvatar() {
   }, []);
 
   useEffect(() => {
-    if (position && mapRef.current) {
+    if (position && mapRef.current && !isMapTouched) {
       mapRef.current.animateToRegion({
         ...position,
         latitudeDelta: 0.005,
         longitudeDelta: 0.005,
       }, 1000);
     }
-  }, [position]);
+  }, [position, isMapTouched]);
+
+  const handleMapTouch = () => {
+    setIsMapTouched(true);
+    if (touchTimeout.current) clearTimeout(touchTimeout.current);
+    touchTimeout.current = setTimeout(() => {
+      setIsMapTouched(false);
+    }, 10000); // 10秒後に自動で現在地追尾を再開
+  };
 
   const handleLostPress = () => router.push('/lost/search');
   const handleFoundPress = () => router.push('/found/register');
@@ -81,6 +91,7 @@ export default function MapWithAvatar() {
               }
             : undefined
         }
+        onRegionChange={handleMapTouch}
       />
 
       <TouchableOpacity style={styles.settingsButton} onPress={handleSettingsPress}>
@@ -89,6 +100,7 @@ export default function MapWithAvatar() {
 
       <TouchableOpacity style={styles.compassButton} onPress={() => {
         if (position && mapRef.current) {
+          setIsMapTouched(false); // 手動リセット
           mapRef.current.animateToRegion({
             ...position,
             latitudeDelta: 0.005,
