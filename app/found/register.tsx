@@ -109,12 +109,7 @@ export default function RegisterFoundItem() {
       setRegion(newRegion);
       setSelectedLocation({ latitude, longitude });
     })();
-  }, []);
-
-    setRegion(newRegion);
-    setSelectedLocation({ latitude, longitude });
-  })();
-}, []);
+  },[]);
 
 
   return (

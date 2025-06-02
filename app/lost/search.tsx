@@ -1,17 +1,3 @@
-<<<<<<< HEAD
-// app/lost/search-detail.tsx
-
-import { MaterialIcons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import MapView, { MapPressEvent, Marker } from 'react-native-maps';
-import DateTimePickerModal from 'react-native-modal-datetime-picker';
-const { token } = useLocalSearchParams();
-
-
-=======
 import { MaterialIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
@@ -30,7 +16,6 @@ import {
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import MapView, { MapPressEvent, Marker } from 'react-native-maps';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
->>>>>>> murai_frontend
 
 export default function SearchDetailScreen() {
   const router = useRouter();
@@ -39,29 +24,20 @@ export default function SearchDetailScreen() {
   const [images, setImages] = useState<string[]>([]);
   const [kind, setKind] = useState('');
   const [details, setDetails] = useState('');
-<<<<<<< HEAD
   const [dateRange, setDateRange] = useState({ from: new Date(), to: new Date() });
-=======
   const [locationNotes, setLocationNotes] = useState('');
->>>>>>> murai_frontend
   const [region, setRegion] = useState({
     latitude: 35.0266,
     longitude: 135.7809,
     latitudeDelta: 0.002,
     longitudeDelta: 0.002,
   });
-  const [selectedLocations, setSelectedLocations] = useState<
-    { latitude: number; longitude: number }[]
-  >([]);
+  const [selectedLocations, setSelectedLocations] = useState<{ latitude: number; longitude: number }[]>([]);
 
   const [quizShown, setQuizShown] = useState(false);
   const [quizzes, setQuizzes] = useState<string[]>([]);
   const [answers, setAnswers] = useState<string[]>([]);
 
-  const [dateRange, setDateRange] = useState({
-    from: new Date(),
-    to: new Date(),
-  });
   const [isDatePickerVisible, setDatePickerVisible] = useState(false);
   const [activePicker, setActivePicker] = useState<'from' | null>(null);
 
@@ -77,7 +53,6 @@ export default function SearchDetailScreen() {
   };
 
   const removeImage = (index: number) => {
-<<<<<<< HEAD
   setImages(prevImages => prevImages.filter((_, i) => i !== index));
 };
 
@@ -124,7 +99,7 @@ export default function SearchDetailScreen() {
   formData.append('longitude', String(selectedLocation.longitude));
 
   try {
-    const response = await fetch('https://8807-240b-250-86a1-7400-799f-27f7-23ce-f0b9.ngrok-free.app/lost-items', {
+    const response = await fetch('https://05ac-240b-250-86a1-7400-799f-27f7-23ce-f0b9.ngrok-free.app/lost-items', {
       method: 'POST',
       body: formData,
       headers: {
@@ -145,21 +120,6 @@ export default function SearchDetailScreen() {
 };
 
 
-  // 地図タップ時の処理
-  const handleMapPress = (event: MapPressEvent) => {
-  const { latitude, longitude } = event.nativeEvent.coordinate;
-  setSelectedLocation({ latitude, longitude });
-  };
-
-  //
-  const [isDatePickerVisible, setDatePickerVisible] = useState(false);
-  const [activePicker, setActivePicker] = useState<'from' | 'to' | null>(null);
-
-  
-=======
-    setImages(prev => prev.filter((_, i) => i !== index));
-  };
->>>>>>> murai_frontend
 
   const generateQuizzes = (detailsText: string): string[] => {
     if (!detailsText) return [];
@@ -233,7 +193,7 @@ export default function SearchDetailScreen() {
     centerOnCurrentLocation();
   }, []);
 
-  return (
+return (
     <KeyboardAwareScrollView
       contentContainerStyle={styles.container}
       enableOnAndroid
@@ -249,66 +209,6 @@ export default function SearchDetailScreen() {
         <Text>＋ 画像を選ぶ</Text>
       </TouchableOpacity>
       <ScrollView horizontal>
-<<<<<<< HEAD
-  {images.map((uri, i) => (
-    <View key={i} style={{ position: 'relative', marginRight: 8 }}>
-      <Image source={{ uri }} style={styles.image} />
-      <TouchableOpacity
-        onPress={() => removeImage(i)}
-        style={styles.removeImageButton}
-      >
-        <Text style={styles.removeImageText}>✕</Text>
-      </TouchableOpacity>
-    </View>
-  ))}
-</ScrollView>
-      {/* WHEN */}
-      <Text style={styles.label}>📅 WHEN（範囲指定）</Text>
-      <View style={styles.row}>
-  <TouchableOpacity
-    onPress={() => {
-      setActivePicker('from');
-      setDatePickerVisible(true);
-    }}
-    style={styles.dateButton}
-  >
-    <MaterialIcons name="calendar-today" size={20} color="#007AFF" />
-    <Text style={{ marginLeft: 8 }}>{dateRange.from.toLocaleDateString()}</Text>
-  </TouchableOpacity>
-
-  <Text style={{ marginHorizontal: 8 }}>〜</Text>
-
-  <TouchableOpacity
-    onPress={() => {
-      setActivePicker('to');
-      setDatePickerVisible(true);
-    }}
-    style={styles.dateButton}
-  >
-    <MaterialIcons name="calendar-today" size={20} color="#007AFF" />
-    <Text style={{ marginLeft: 8 }}>{dateRange.to.toLocaleDateString()}</Text>
-  </TouchableOpacity>
-</View>
-      <DateTimePickerModal
-  isVisible={isDatePickerVisible}
-  mode="date"
-  onConfirm={(date) => {
-    setDatePickerVisible(false);
-    if (activePicker === 'from') {
-      setDateRange(prev => ({ ...prev, from: date }));
-    } else if (activePicker === 'to') {
-      setDateRange(prev => ({ ...prev, to: date }));
-    }
-    setActivePicker(null);
-  }}
-  onCancel={() => {
-    setDatePickerVisible(false);
-    setActivePicker(null);
-  }}
-  date={activePicker === 'from' ? dateRange.from : dateRange.to}
-/>
-
-=======
         {images.map((uri, i) => (
           <View key={i} style={{ position: 'relative', marginRight: 8 }}>
             <Image source={{ uri }} style={styles.image} />
@@ -387,7 +287,6 @@ export default function SearchDetailScreen() {
           <Text style={styles.clearButtonText}>🗑️ ピン削除</Text>
         </TouchableOpacity>
       </View>
->>>>>>> murai_frontend
 
       <Text style={styles.label}> 場所の詳細（ex.教室名）</Text>
       <TextInput
@@ -538,7 +437,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   removeImageButton: {
-<<<<<<< HEAD
   position: 'absolute',
   top: -8,
   right: -8,
@@ -555,22 +453,4 @@ removeImageText: {
   fontSize: 14,
   fontWeight: 'bold',
 },
-=======
-    position: 'absolute',
-    top: -8,
-    right: -8,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    borderRadius: 12,
-    width: 24,
-    height: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1,
-  },
-  removeImageText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
->>>>>>> murai_frontend
 });

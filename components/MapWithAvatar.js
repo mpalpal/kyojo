@@ -11,12 +11,9 @@ export default function MapWithAvatar() {
   const [isMapTouched, setIsMapTouched] = useState(false);
   const mapRef = useRef(null);
   const router = useRouter();
-<<<<<<< HEAD
-  // 位置情報を取得する関数
-=======
   const touchTimeout = useRef(null);
 
->>>>>>> murai_frontend
+
   useEffect(() => {
     let locationSubscription = null;
     let headingSubscription = null;
