@@ -84,7 +84,7 @@ export default function RegisterFoundItem() {
     formData.append('location_notes', locationNotes);
 
     try {
-      const response = await fetch('https://bca2-2400-4150-9180-b500-8891-8d59-e8f4-33ed.ngrok-free.app/api/found-items', {
+      const response = await fetch('https://fc59-2400-4150-9180-b500-8891-8d59-e8f4-33ed.ngrok-free.app/api/found-items', {
       method: 'POST',
       body: formData,
       });

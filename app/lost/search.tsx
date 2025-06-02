@@ -113,7 +113,7 @@ export default function SearchDetailScreen() {
     });
 
     try {
-      const response = await fetch('https://bca2-2400-4150-9180-b500-8891-8d59-e8f4-33ed.ngrok-free.app/api/lost-items', {
+      const response = await fetch('https://fc59-2400-4150-9180-b500-8891-8d59-e8f4-33ed.ngrok-free.app/api/lost-items', {
         method: 'POST',
         body: formData,
         // headers: {
@@ -124,9 +124,12 @@ export default function SearchDetailScreen() {
         throw new Error('送信に失敗しました');
       }
 
+      const data = await response.json();
+      const lostItemId = data.item_id;
+
       Alert.alert('送信完了', '検索条件が保存されました');
 
-      router.push(`/lost/search_map?latitude=${region.latitude}&longitude=${region.longitude}`);
+      router.push(`/lost/search_map?latitude=${region.latitude}&longitude=${region.longitude}&lost_item_id=${lostItemId}`);
     } catch (error) {
       Alert.alert('エラー', (error as Error).message);
     }

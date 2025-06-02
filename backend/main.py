@@ -2,7 +2,7 @@
 import os
 import random
 import shutil
-# import sys
+import sys
 from datetime import datetime
 from typing import List, Optional
 
@@ -34,7 +34,7 @@ app.add_middleware(
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # DB初期化
-reset_database() # delete all existing tables and create new ones
+# reset_database() # delete all existing tables and create new ones
 Base.metadata.create_all(bind=engine)
 
 # DBセッション依存性
@@ -57,8 +57,10 @@ async def register_lost_item(
     db: Session = Depends(get_db)
 ):
     
+    print("Lost item posted")
+
     form_data = await request.form()
-    print("Received fields:", form_data.keys())
+    # print("Received fields:", form_data.keys())
 
     # 画像保存
     os.makedirs("uploads", exist_ok=True)
@@ -151,7 +153,7 @@ async def register_found_item(
     db: Session = Depends(get_db)
 ):
     
-    print("Found item post request received")
+    print("Found item posted")
     # 画像保存
     os.makedirs("uploads", exist_ok=True)
     saved_paths = []
@@ -195,6 +197,7 @@ def get_found_items(db: Session = Depends(get_db)):
 
 # when a new lost item is registered, calculate match scores against all found items
 def match_lost_item(lost_item: LostItem, db: Session):
+    print("Matching lost item with found items...")
     found_items = db.query(FoundItem).all()
     lost_image_paths = lost_item.image_urls.split(',') if lost_item.image_urls else []
 
@@ -207,7 +210,7 @@ def match_lost_item(lost_item: LostItem, db: Session):
             found_image_paths=found_image_paths
         )
 
-        if isinstance(score, int) and score >= 3:  # Adjust threshold if needed
+        if isinstance(score, int):  # Adjust threshold if needed
             match = MatchScore(
                 lost_item_id=lost_item.id,
                 found_item_id=found.id,
@@ -232,7 +235,7 @@ def match_found_item(found_item: FoundItem, db: Session):
             found_image_paths=found_image_paths
         )
 
-        if isinstance(score, int) and score >= 3:  # Acceptable match threshold
+        if isinstance(score, int):  # Acceptable match threshold
             match = MatchScore(
                 lost_item_id=lost.id,
                 found_item_id=found_item.id,
@@ -250,3 +253,36 @@ def match_found_item_safe(found_item_id: int):
     finally:
         db.close()
 
+@app.get("/api/matched-found-items")
+def get_matched_found_items(lost_item_id: int, db: Session = Depends(get_db)):
+    matches = (
+        db.query(MatchScore)
+        .filter(MatchScore.lost_item_id == lost_item_id, MatchScore.score > 3)
+        .all()
+    )
+
+    found_item_ids = [m.found_item_id for m in matches]
+
+    if not found_item_ids:
+        return []
+    
+    print(f"Found items for lost item {lost_item_id}: {found_item_ids}")
+    sys.stdout.flush()
+
+
+    found_items = (
+        db.query(FoundItem)
+        .filter(FoundItem.id.in_(found_item_ids))
+        .all()
+    )
+
+    return [
+        {
+            "id": item.id,
+            "latitude": item.latitude,
+            "longitude": item.longitude,
+            "details": "",  # Optionally include more info
+            "image_url": item.image_urls.split(',')[0] if item.image_urls else None,
+        }
+        for item in found_items
+    ]

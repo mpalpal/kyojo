@@ -22,7 +22,9 @@ type MarkerData = {
 export default function SearchMapScreen() {
   const router = useRouter();
   const mapRef = useRef<MapView>(null);
-  const { latitude, longitude } = useLocalSearchParams();
+  const { latitude, longitude, lost_item_id } = useLocalSearchParams();
+  console.log("lost_item_id:", lost_item_id);
+
 
   const center = {
     latitude: Number(latitude || 35.0266),
@@ -40,10 +42,10 @@ export default function SearchMapScreen() {
   useEffect(() => {
   const fetchMarkers = async () => {
     try {
-      // const res = await fetch('https://5149-133-3-201-39.ngrok-free.app/api/lost-items');
 
-      const res = await fetch('https://bca2-2400-4150-9180-b500-8891-8d59-e8f4-33ed.ngrok-free.app/api/lost-items');
-
+      const res = await fetch(`https://fc59-2400-4150-9180-b500-8891-8d59-e8f4-33ed.ngrok-free.app/api/matched-found-items?lost_item_id=${lost_item_id}`, {
+        method: 'GET'
+      });
       if (!res.ok) {
         console.error('❌ HTTPエラー', res.status);
         return;
@@ -63,39 +65,40 @@ export default function SearchMapScreen() {
   };
 
   fetchMarkers();
+  console.log("Markers:", markers);
 }, []);
 
 
   return (
     <View style={styles.container}>
       <MapView ref={mapRef} style={styles.map} initialRegion={center}>
-  {markers.map((marker, index) => (
-    <Marker
-      key={marker.id}
-      coordinate={{ latitude: marker.latitude, longitude: marker.longitude }}
-    >
-      <Callout onPress={() => router.push(`/lost/check_item?id=${marker.id}`)}>
-        <View style={{ width: 200 }}>
-          {marker.image_url && (
-            <Image
-              source={{ uri: `https://5149-133-3-201-39.ngrok-free.app/uploads/${marker.image_url}` }}
-              style={{ width: '100%', height: 100, borderRadius: 6, marginBottom: 8 }}
-              resizeMode="cover"
-            />
-          )}
-          <Text style={{ fontWeight: 'bold', marginBottom: 4 }}>説明</Text>
-          <Text numberOfLines={3}>{marker.details}</Text>
-          <TouchableOpacity
-            style={styles.calloutButton}
-            onPress={() => router.push(`/lost/check_item?id=${marker.id}`)}
+        {markers.map((marker, index) => (
+          <Marker
+            key={marker.id}
+            coordinate={{ latitude: marker.latitude, longitude: marker.longitude }}
           >
-            <Text style={styles.calloutButtonText}>チェックする</Text>
-          </TouchableOpacity>
-        </View>
-      </Callout>
-    </Marker>
-  ))}
-</MapView>
+            <Callout onPress={() => router.push(`/lost/check_item?id=${marker.id}`)}>
+              <View style={{ width: 200 }}>
+                {marker.image_url && (
+                  <Image
+                    source={{ uri: `https://fc59-2400-4150-9180-b500-8891-8d59-e8f4-33ed.ngrok-free.app/${marker.image_url}` }}
+                    style={{ width: '100%', height: 100, borderRadius: 6, marginBottom: 8 }}
+                    resizeMode="cover"
+                  />
+                )}
+                <Text style={{ fontWeight: 'bold', marginBottom: 4 }}>説明</Text>
+                <Text numberOfLines={3}>{marker.details}</Text>
+                <TouchableOpacity
+                  style={styles.calloutButton}
+                  onPress={() => router.push(`/lost/check_item?id=${marker.id}`)}
+                >
+                  <Text style={styles.calloutButtonText}>チェックする</Text>
+                </TouchableOpacity>
+              </View>
+            </Callout>
+          </Marker>
+        ))}
+      </MapView>
 
 
       {/* 凡例 */}
