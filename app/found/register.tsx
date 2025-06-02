@@ -3,14 +3,22 @@
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  Alert,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import MapView, { MapPressEvent, Marker } from 'react-native-maps';
-
 
 export default function RegisterFoundItem() {
   const router = useRouter();
   const [images, setImages] = useState<(string | null)[]>([null, null]);
+  const mapRef = useRef<MapView | null>(null);
 
   const initialRegion = {
     latitude: 35.0266,
@@ -66,23 +74,42 @@ export default function RegisterFoundItem() {
 
   const isReadyToSubmit = images.every((uri) => uri !== null) && selectedLocation;
 
-  useEffect(() => {
-  (async () => {
-    let { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('位置情報へのアクセスが拒否されました');
-      return;
-    }
-
+  const centerToUserLocation = async () => {
     let location = await Location.getCurrentPositionAsync({});
     const { latitude, longitude } = location.coords;
-
     const newRegion = {
       latitude,
       longitude,
       latitudeDelta: 0.005,
       longitudeDelta: 0.005,
     };
+    setRegion(newRegion);
+    setSelectedLocation({ latitude, longitude });
+    mapRef.current?.animateToRegion(newRegion, 500);
+  };
+
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('位置情報へのアクセスが拒否されました');
+        return;
+      }
+
+      let location = await Location.getCurrentPositionAsync({});
+      const { latitude, longitude } = location.coords;
+
+      const newRegion = {
+        latitude,
+        longitude,
+        latitudeDelta: 0.005,
+        longitudeDelta: 0.005,
+      };
+
+      setRegion(newRegion);
+      setSelectedLocation({ latitude, longitude });
+    })();
+  }, []);
 
     setRegion(newRegion);
     setSelectedLocation({ latitude, longitude });
@@ -116,20 +143,26 @@ export default function RegisterFoundItem() {
       </View>
 
       <Text style={styles.subLabel}>Where did you find it?</Text>
-      <MapView
-        style={styles.map}
-        region={region}
-        onRegionChangeComplete={setRegion}
-        onPress={handleMapPress}
-      >
-        {selectedLocation && <Marker coordinate={selectedLocation} />}
-      </MapView>
+
+      <View style={{ position: 'relative' }}>
+        <MapView
+          ref={mapRef}
+          style={styles.map}
+          region={region}
+          onRegionChangeComplete={setRegion}
+          onPress={handleMapPress}
+          showsUserLocation={true}
+        >
+          {selectedLocation && <Marker coordinate={selectedLocation} />}
+        </MapView>
+
+        <TouchableOpacity style={styles.currentLocationButton} onPress={centerToUserLocation}>
+          <Text style={styles.currentLocationButtonText}>📍</Text>
+        </TouchableOpacity>
+      </View>
 
       <TouchableOpacity
-        style={[
-          styles.registerButton,
-          !isReadyToSubmit && { backgroundColor: '#ccc' },
-        ]}
+        style={[styles.registerButton, !isReadyToSubmit && { backgroundColor: '#ccc' }]}
         onPress={handleRegister}
         disabled={!isReadyToSubmit}
       >
@@ -188,9 +221,25 @@ const styles = StyleSheet.create({
     color: '#999',
   },
   map: {
-    height: 200,
+    height: 300,
     borderRadius: 10,
     marginTop: 8,
+  },
+  currentLocationButton: {
+    position: 'absolute',
+    bottom: 10,
+    right: 10,
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 10,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.41,
+  },
+  currentLocationButtonText: {
+    fontSize: 20,
   },
   registerButton: {
     backgroundColor: '#007AFF',
