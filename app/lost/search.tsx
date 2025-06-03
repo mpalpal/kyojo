@@ -7,7 +7,6 @@ import { Alert, Image, Modal, ScrollView, StyleSheet, Text, TextInput, Touchable
 import MapView, { MapPressEvent, Marker } from 'react-native-maps';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 
-
 export default function SearchDetailScreen() {
   const router = useRouter();
   const mapRef = useRef<MapView>(null);
@@ -16,10 +15,13 @@ export default function SearchDetailScreen() {
 
   const SUPPORTED_CATEGORIES = [
     { label: '📱 Phone', value: 'phone' },
+    { label: '💻 Laptop', value: 'laptop' },
+    { label: '🎧 earphones', value: 'earphones' },
     { label: '👛 Wallet', value: 'wallet' },
     { label: '🎒 Bag', value: 'bag' },
     { label: '🔑 Keys', value: 'keys' },
-    { label: '📦 Others', value: 'others' }
+    { label: '🪪 Cards', value: 'cards' },
+    { label: '🔎 Others', value: 'others' }
   ];
 
   // Inside your component
@@ -66,13 +68,33 @@ export default function SearchDetailScreen() {
     setImages(prev => prev.filter((_, i) => i !== index));
   };
 
-  const generateQuizzes = (detailsText: string): string[] => {
-    if (!detailsText) return [];
-    return [
-      '本体の色は何色ですか？',
-      '待受画面に写っている動物はなんですか？',
-    ];
+  // const generateQuizzes = (detailsText: string): string[] => {
+  //   if (!detailsText) return [];
+  //   return [
+  //     '本体の色は何色ですか？',
+  //     '待受画面に写っている動物はなんですか？',
+  //   ];
+  // };
+
+  const generateQuizzes = async (detailsText: string, category: string): Promise<string[]> => {
+    try {
+      const res = await fetch("https://fc59-2400-4150-9180-b500-8891-8d59-e8f4-33ed.ngrok-free.app/api/generate-questions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          category,
+          description: detailsText
+        })
+      });
+
+      const data = await res.json();
+      return data.questions || [];
+    } catch (err) {
+      console.error("Failed to fetch questions:", err);
+      return [];
+    }
   };
+
 
   const handleSubmit = async () => {
     if (selectedLocations.length === 0) {
@@ -81,12 +103,21 @@ export default function SearchDetailScreen() {
     }
 
     if (!quizShown) {
-      const generated = generateQuizzes(details);
+      const generated = await generateQuizzes(details, selectedKind.value);
       setQuizzes(generated);
       setAnswers(Array(generated.length).fill(''));
       setQuizShown(true);
       return;
     }
+
+
+    // if (!quizShown) {
+    //   const generated = generateQuizzes(details);
+    //   setQuizzes(generated);
+    //   setAnswers(Array(generated.length).fill(''));
+    //   setQuizShown(true);
+    //   return;
+    // }
 
     for (let i = 0; i < answers.length; i++) {
       if (!answers[i].trim()) {
@@ -123,9 +154,14 @@ export default function SearchDetailScreen() {
       formData.append(`locations[${i}][longitude]`, String(loc.longitude));
     });
 
-    answers.forEach((answer, i) => {
-      formData.append(`quiz_answers[${i}]`, answer);
+    // Record answers to security quiz
+    // answers.forEach((answer, i) => {
+    //   formData.append(`quiz_answers[${i}]`, answer);
+    // });
+    quizzes.forEach((question, i) => {
+      formData.append(`security_qna[${i}]`, `Question ${i + 1}: ${question} | Answer to Question ${i + 1}: ${answers[i]}`);
     });
+
 
     try {
       const response = await fetch('https://fc59-2400-4150-9180-b500-8891-8d59-e8f4-33ed.ngrok-free.app/api/lost-items', {
@@ -257,7 +293,6 @@ export default function SearchDetailScreen() {
           </View>
         </TouchableOpacity>
       </Modal>
-
 
 
       <Text style={styles.label}> WHEN（落とした日を選択）</Text>

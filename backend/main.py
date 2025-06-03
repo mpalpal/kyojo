@@ -6,14 +6,21 @@ import sys
 from datetime import datetime
 from typing import List, Optional
 
+import openai
+from dotenv import load_dotenv
+from pydantic import BaseModel
+from security_questions import SECURITY_QUESTIONS
+
+load_dotenv()
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
 from database import Base, SessionLocal, engine
 from fastapi import (BackgroundTasks, Depends, FastAPI, File, Form, Request,
                      UploadFile)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from match import get_match_score
-from models import (FoundItem, LostItem, LostItemLocation, LostItemQuizAnswer,
-                    MatchScore)
+from models import FoundItem, LostItem, LostItemLocation, MatchScore
 from scripts.reset_db import reset_database
 from sqlalchemy.orm import Session
 
@@ -34,7 +41,7 @@ app.add_middleware(
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # DB初期化
-# reset_database() # delete all existing tables and create new ones
+reset_database() # delete all existing tables and create new ones
 Base.metadata.create_all(bind=engine)
 
 # DBセッション依存性
@@ -73,14 +80,28 @@ async def register_lost_item(
             shutil.copyfileobj(img.file, f)
         saved_paths.append(file_path)
 
-    # データベース登録
+    # 📌 Construct security info string
+    security_lines = []
+    i = 0
+    while True:
+        key = f"security_qna[{i}]"
+        if key in form_data:
+            qna = form_data[key]
+            security_lines.append(f"Security Info {i + 1}: {qna}")
+            i += 1
+        else:
+            break
+    security_info_text = "\n".join(security_lines)
+
+    # ✅ Create the lost item once, with all data
     lost_item = LostItem(
-        details=details,
+        details=details.strip(),
         kind=kind,
         date_from=datetime.fromisoformat(date_from),
         date_to=datetime.fromisoformat(date_to),
         location_notes=location_notes,
-        image_urls=",".join(saved_paths)
+        image_urls=",".join(saved_paths),
+        security_info=security_info_text
     )
     db.add(lost_item)
     db.commit()
@@ -105,19 +126,21 @@ async def register_lost_item(
             break
 
     # Save quiz answers
-    i = 0
-    while True:
-        key = f"quiz_answers[{i}]"
-        if key in form_data:
-            answer = form_data[key]
-            quiz = LostItemQuizAnswer(
-                item_id=lost_item.id,
-                answer=answer,
-            )
-            db.add(quiz)
-            i += 1
-        else:
-            break
+    # i = 0
+    # while True:
+    #     key = f"quiz_answers[{i}]"
+    #     if key in form_data:
+    #         answer = form_data[key]
+    #         quiz = LostItemQuizAnswer(
+    #             item_id=lost_item.id,
+    #             answer=answer,
+    #         )
+    #         db.add(quiz)
+    #         i += 1
+    #     else:
+    #         break
+
+    # Append quiz to details
 
     db.commit()
 
@@ -136,6 +159,7 @@ def get_lost_items(db: Session = Depends(get_db)):
             "latitude": item.locations[0].latitude if item.locations else None,
             "longitude": item.locations[0].longitude if item.locations else None,
             "details": item.details,
+            "security_info": item.security_info,
             "image_url": item.image_urls.split(',')[0] if item.image_urls else None,
         }
         for item in random_items
@@ -201,11 +225,15 @@ def match_lost_item(lost_item: LostItem, db: Session):
     found_items = db.query(FoundItem).all()
     lost_image_paths = lost_item.image_urls.split(',') if lost_item.image_urls else []
 
+    # combine details and security info 
+    full_description = (lost_item.details or "") + "\n" + (lost_item.security_info or "")
+
+
     for found in found_items:
         found_image_paths = found.image_urls.split(',') if found.image_urls else []
 
         score = get_match_score(
-            lost_description=lost_item.details,
+            lost_description=full_description,
             lost_image_path=lost_image_paths[0] if lost_image_paths else None,
             found_image_paths=found_image_paths
         )
@@ -229,11 +257,15 @@ def match_found_item(found_item: FoundItem, db: Session):
     for lost in lost_items:
         lost_image_paths = lost.image_urls.split(',') if lost.image_urls else []
 
+        full_description = (lost.details or "") + "\n" + (lost.security_info or "")
+
         score = get_match_score(
-            lost_description=lost.details,
+            lost_description=full_description,
             lost_image_path=lost_image_paths[0] if lost_image_paths else None,
             found_image_paths=found_image_paths
         )
+
+        print(f"Match score for lost item {lost.id} and found item {found_item.id}: {score}")
 
         if isinstance(score, int):  # Acceptable match threshold
             match = MatchScore(
@@ -286,3 +318,42 @@ def get_matched_found_items(lost_item_id: int, db: Session = Depends(get_db)):
         }
         for item in found_items
     ]
+
+class QuestionRequest(BaseModel):
+    category: str
+    description: str
+
+@app.post("/api/generate-questions")
+async def generate_questions(data: QuestionRequest):
+    print("Received data:", data.dict())
+    category = data.category
+    description = data.description
+    questions = SECURITY_QUESTIONS.get(category, SECURITY_QUESTIONS["others"])
+
+    prompt = f"""
+A user submitted this description of a lost item:
+\"{description}\"
+
+Below is a list of possible security questions related to the item category: '{category}'.
+Your task is to filter out any questions that are already answered or clearly implied by the description.
+Only return questions that are still relevant and unanswered.
+
+⚠ Do not create new questions. Only use the list provided.
+Return the remaining questions as a clean bullet list. No extra commentary.
+
+Candidate questions:
+{chr(10).join(['- ' + q for q in questions])}
+"""
+
+    try:
+        response = openai.chat.completions.create(
+            model="gpt-4o",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.2
+        )
+        content = response.choices[0].message.content or ""
+        filtered = [line.strip("•- ").strip() for line in content.split("\n") if line.strip()]
+        return {"questions": filtered}
+    except Exception as e:
+        print("OpenAI error:", e)
+        return {"questions": questions}  # fallback

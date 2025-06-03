@@ -18,10 +18,8 @@ def get_match_score(
     lost_image_path: Optional[str] = None,
     found_image_paths: Optional[List[str]] = None
 ) -> int:
-    
-    if not found_image_paths or len(found_image_paths) != 2:
-        print("Error: Found item must have exactly two images.")
-        return -1
+    if found_image_paths is None:
+        found_image_paths = []
 
     messages = [
         {
@@ -31,13 +29,7 @@ def get_match_score(
         {
             "role": "user",
             "content": [
-                {"type": "text",
-                 "text": (
-                        "This is a lost item.\n\n"
-                        "It includes both the user's written description and their answers to security questions.\n\n"
-                        f"{lost_description}"
-                    )
-                }
+                {"type": "text", "text": f"This is a lost item. Description: {lost_description}"}
             ]
         }
     ]
@@ -55,9 +47,8 @@ def get_match_score(
             print(f"Failed to encode lost image: {e}")
 
     messages[1]["content"].append(
-        {"type": "text",
-         "text": "This is a found item with two photos. Do they seem to be the same item as the lost item? "
-                "Give a score from 1 (not similar) to 5 (very likely same). Return only the integer score."}
+        {"type": "text", "text": "This is a found item. Do they seem to be the same item? "
+                                 "Give a score from 1 (not similar) to 5 (very likely same). Return only the integer score."}
     )
 
     for path in found_image_paths:
@@ -71,16 +62,15 @@ def get_match_score(
             )
         except Exception as e:
             print(f"Failed to encode found image '{path}': {e}")
-            return -1
 
     try:
         response = openai.chat.completions.create(
             model="gpt-4o",
             messages=messages,
-            max_tokens=20
+            max_tokens=50
         )
         answer = response.choices[0].message.content.strip()
-        return int(answer)  # integer only
+        return int(answer)  # Make sure you expect just an integer
     except Exception as e:
         print(f"OpenAI API call failed: {e}")
-        return -1 
+        return -1  # Error case
