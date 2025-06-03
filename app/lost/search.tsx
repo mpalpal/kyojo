@@ -3,13 +3,15 @@ import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Image, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import MapView, { MapPressEvent, Marker } from 'react-native-maps';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 
 export default function SearchDetailScreen() {
   const router = useRouter();
   const mapRef = useRef<MapView>(null);
+
+  const [loading, setLoading] = useState(false); // for loading screen
 
   const [images, setImages] = useState<string[]>([]);
 
@@ -110,15 +112,6 @@ export default function SearchDetailScreen() {
       return;
     }
 
-
-    // if (!quizShown) {
-    //   const generated = generateQuizzes(details);
-    //   setQuizzes(generated);
-    //   setAnswers(Array(generated.length).fill(''));
-    //   setQuizShown(true);
-    //   return;
-    // }
-
     for (let i = 0; i < answers.length; i++) {
       if (!answers[i].trim()) {
         Alert.alert('すべてのクイズに回答してください。');
@@ -164,6 +157,7 @@ export default function SearchDetailScreen() {
 
 
     try {
+      setLoading(true);
       const response = await fetch('https://fc59-2400-4150-9180-b500-8891-8d59-e8f4-33ed.ngrok-free.app/api/lost-items', {
         method: 'POST',
         body: formData,
@@ -183,6 +177,8 @@ export default function SearchDetailScreen() {
       router.push(`/lost/search_map?latitude=${region.latitude}&longitude=${region.longitude}&lost_item_id=${lostItemId}`);
     } catch (error) {
       Alert.alert('エラー', (error as Error).message);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -229,6 +225,7 @@ export default function SearchDetailScreen() {
   }, []);
 
   return (
+    
     <ScrollView
       contentContainerStyle={styles.container}
       // enableOnAndroid
@@ -401,6 +398,15 @@ export default function SearchDetailScreen() {
           {quizShown ? 'この条件で検索する' : '次へ'}
         </Text>
       </TouchableOpacity>
+
+      <Modal visible={loading} transparent animationType="fade">
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.3)' }}>
+          <View style={{ backgroundColor: '#fff', padding: 20, borderRadius: 10 }}>
+            <Text style={{ marginBottom: 10 }}>処理中...</Text>
+            <ActivityIndicator size="large" color="#007AFF" />
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
