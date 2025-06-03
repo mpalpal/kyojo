@@ -18,7 +18,7 @@ export default function SearchDetailScreen() {
   const SUPPORTED_CATEGORIES = [
     { label: '📱 Phone', value: 'phone' },
     { label: '💻 Laptop', value: 'laptop' },
-    { label: '🎧 earphones', value: 'earphones' },
+    { label: '🎧 Earphones', value: 'earphones' },
     { label: '👛 Wallet', value: 'wallet' },
     { label: '🎒 Bag', value: 'bag' },
     { label: '🔑 Keys', value: 'keys' },

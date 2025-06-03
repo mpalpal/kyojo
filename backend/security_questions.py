@@ -41,7 +41,7 @@ SECURITY_QUESTIONS = {
         "Was there a keychain accessory? If so, describe it.",
         "What colour are the keys?",
     ],
-    "id_card": [
+    "cards": [
         "What type of ID card is it (e.g. driver's license, student ID, credit card)?",
         "What is the name on the ID card?",
         "What colour is the ID card?",

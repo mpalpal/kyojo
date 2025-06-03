@@ -41,7 +41,7 @@ app.add_middleware(
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # DB初期化
-reset_database() # delete all existing tables and create new ones
+# reset_database() # delete all existing tables and create new ones
 Base.metadata.create_all(bind=engine)
 
 # DBセッション依存性
